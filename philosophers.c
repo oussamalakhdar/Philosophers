@@ -6,11 +6,22 @@
 /*   By: olakhdar <olakhdar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/06 16:35:56 by olakhdar          #+#    #+#             */
-/*   Updated: 2022/05/17 19:08:57 by olakhdar         ###   ########.fr       */
+/*   Updated: 2022/05/18 22:14:17 by olakhdar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philosophers.h"
+
+long	getnow(struct timeval t1)
+{
+	struct timeval	t2;
+	unsigned long long	start;
+	unsigned long long	now;
+	gettimeofday(&t2, NULL);
+	start = t1.tv_sec * 1000 + t1.tv_usec / 1000;
+	now = t2.tv_sec * 1000 + t2.tv_usec / 1000;
+	return (now - start);
+}
 
 void	*routine(void	*p)
 {
@@ -21,24 +32,25 @@ void	*routine(void	*p)
 	{
 		pthread_mutex_lock(&ptr->data->forks[ptr->right_fork]);
 		pthread_mutex_lock(&ptr->print);
-		printf("\nPhilosopher %d has taking right fork", ptr->id);
+		printf("%ld %d has taking right fork\n", getnow(ptr->data->time), ptr->id);
 		pthread_mutex_unlock(&ptr->print);
 		pthread_mutex_lock(&ptr->data->forks[ptr->left_fork]);
 		pthread_mutex_lock(&ptr->print);
-		printf("\nPhilosopher %d has taking left fork", ptr->id);
+		printf("%ld %d has taking left fork\n", getnow(ptr->data->time), ptr->id);
+		ptr->last_meal = getnow(ptr->data->time);
 		pthread_mutex_unlock(&ptr->print);
 		pthread_mutex_lock(&ptr->print);
-		printf("\nPhilosopher %d is eating", ptr->id);
+		printf("%ld %d is eating\n", getnow(ptr->data->time), ptr->id);
 		pthread_mutex_unlock(&ptr->print);
-		usleep(100 * 1000);
+		usleep(ptr->data->time_toeat * 1000);
 		pthread_mutex_unlock(&ptr->data->forks[ptr->right_fork]);
 		pthread_mutex_unlock(&ptr->data->forks[ptr->left_fork]);
 		pthread_mutex_lock(&ptr->print);
-		printf("\nPhilosopher %d is sleeping", ptr->id);
+		printf("%ld %d is sleeping\n", getnow(ptr->data->time), ptr->id);
 		pthread_mutex_unlock(&ptr->print);
-		usleep(100 * 1000);
+		usleep(ptr->data->time_tosleep * 1000);
 		pthread_mutex_lock(&ptr->print);
-		printf("\nPhilosopher %d is thinking", ptr->id);
+		printf("%ld %d is thinking\n", getnow(ptr->data->time), ptr->id);
 		pthread_mutex_unlock(&ptr->print);
 	}
 	return (NULL);
@@ -46,6 +58,14 @@ void	*routine(void	*p)
 
 void	getdata(t_thread *ptr, char **argv, int argc)
 {
+	// while(str[i])
+	// {
+	// 	if (!(str[i] >=48 && str[i] <= 57))
+	// 	{	
+	// 		printf("Error");
+	// 		return 0;
+	// 	}
+	// }
 	ptr->nb_ofphilos = ft_atoi(argv[1]);
 	ptr->time_todie = ft_atoi(argv[2]);
 	ptr->time_toeat = ft_atoi(argv[3]);
@@ -53,6 +73,7 @@ void	getdata(t_thread *ptr, char **argv, int argc)
 	if (argc == 6)
 		ptr->times_musteat = ft_atoi(argv[5]);
 	ptr->forks = malloc(sizeof(pthread_mutex_t) * ptr->nb_ofphilos);
+	gettimeofday(&ptr->time, NULL);
 }
 
 void	createlist(t_thread	*t, t_philo **p, int argc, char **argv)
@@ -83,9 +104,7 @@ int main(int argc, char *argv[])
 	
 	i = 0;
 	p = NULL;
-	gettimeofday(&t.time, NULL);
-	printf("%d",t.time.tv_usec);
-	return 0;
+	gettimeofday(&t.time, NULL); 
 	createlist(&t, &p, argc, argv);
 	i = 0;
 	while(i < t.nb_ofphilos)
@@ -118,45 +137,3 @@ int main(int argc, char *argv[])
 	}
 	return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// void *routine(void	*p)
-// {
-// 	t_thread *ptr;
-
-// 	ptr = (t_thread *)p;
-// 	pthread_mutex_lock(&ptr->mutex);
-// 	for( int i = 0; i < 500; i++)
-// 		ptr->nb++;
-// 	pthread_mutex_unlock(&ptr->mutex);
-
-// 	return NULL;
-// }
-
-	// pthread_t t1, t2;
-	// t_thread	t;
-
-	// t.nb = 0;
-	// pthread_mutex_init(&t.mutex, NULL);
-	// pthread_create(&t1, NULL, &routine, &t);
-	// pthread_create(&t2, NULL, &routine, &t);
-	// pthread_join(t1, NULL);
-	// pthread_join(t2, NULL);
-	// pthread_mutex_destroy(&t.mutex);
-	// printf("nb  == %d\n", t.nb);
