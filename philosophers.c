@@ -6,11 +6,34 @@
 /*   By: olakhdar <olakhdar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/06 16:35:56 by olakhdar          #+#    #+#             */
-/*   Updated: 2022/05/18 22:14:17 by olakhdar         ###   ########.fr       */
+/*   Updated: 2022/05/19 21:32:13 by olakhdar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philosophers.h"
+
+// void ft_sleep(int i)
+// {
+// 	while(i > 0)
+// 		i--;
+// 	return;
+// }
+
+void	*checkdeath(void	*p)
+{
+	t_philo *ptr;
+
+	ptr = (t_philo *)p;
+	while(1)
+	{
+		if (ptr->last_meal + ptr->data->time_todie < getnow(ptr->data->time))
+		{
+			printf("%ld\t%d\tis dead\n", getnow(ptr->data->time), ptr->id);
+			exit(1);
+		}
+	}
+	return (NULL);
+}
 
 long	getnow(struct timeval t1)
 {
@@ -23,6 +46,34 @@ long	getnow(struct timeval t1)
 	return (now - start);
 }
 
+void print_takenfork(t_philo *ptr)
+{
+	pthread_mutex_lock(&ptr->print);
+	printf("%ld\t%d\thas taken a fork\n", getnow(ptr->data->time), ptr->id);
+	pthread_mutex_unlock(&ptr->print);
+}
+
+void print_eating(t_philo *ptr)
+{
+	pthread_mutex_lock(&ptr->print);
+	printf("%ld\t%d\tis eating\n", getnow(ptr->data->time), ptr->id);
+	pthread_mutex_unlock(&ptr->print);
+}
+
+void print_sleeping(t_philo *ptr)
+{
+	pthread_mutex_lock(&ptr->print);
+	printf("%ld\t%d\tis sleeping\n", getnow(ptr->data->time), ptr->id);
+	pthread_mutex_unlock(&ptr->print);
+}
+
+void print_thinking(t_philo *ptr)
+{
+	pthread_mutex_lock(&ptr->print);
+	printf("%ld\t%d\tis thinking\n", getnow(ptr->data->time), ptr->id);
+	pthread_mutex_unlock(&ptr->print);
+}
+
 void	*routine(void	*p)
 {
 	t_philo *ptr;
@@ -31,27 +82,17 @@ void	*routine(void	*p)
 	while(1)
 	{
 		pthread_mutex_lock(&ptr->data->forks[ptr->right_fork]);
-		pthread_mutex_lock(&ptr->print);
-		printf("%ld %d has taking right fork\n", getnow(ptr->data->time), ptr->id);
-		pthread_mutex_unlock(&ptr->print);
+		print_takenfork(ptr);
 		pthread_mutex_lock(&ptr->data->forks[ptr->left_fork]);
-		pthread_mutex_lock(&ptr->print);
-		printf("%ld %d has taking left fork\n", getnow(ptr->data->time), ptr->id);
 		ptr->last_meal = getnow(ptr->data->time);
-		pthread_mutex_unlock(&ptr->print);
-		pthread_mutex_lock(&ptr->print);
-		printf("%ld %d is eating\n", getnow(ptr->data->time), ptr->id);
-		pthread_mutex_unlock(&ptr->print);
+		print_takenfork(ptr);
+		print_eating(ptr);
 		usleep(ptr->data->time_toeat * 1000);
 		pthread_mutex_unlock(&ptr->data->forks[ptr->right_fork]);
 		pthread_mutex_unlock(&ptr->data->forks[ptr->left_fork]);
-		pthread_mutex_lock(&ptr->print);
-		printf("%ld %d is sleeping\n", getnow(ptr->data->time), ptr->id);
-		pthread_mutex_unlock(&ptr->print);
+		print_sleeping(ptr);
 		usleep(ptr->data->time_tosleep * 1000);
-		pthread_mutex_lock(&ptr->print);
-		printf("%ld %d is thinking\n", getnow(ptr->data->time), ptr->id);
-		pthread_mutex_unlock(&ptr->print);
+		print_thinking(ptr);
 	}
 	return (NULL);
 }
@@ -73,7 +114,6 @@ void	getdata(t_thread *ptr, char **argv, int argc)
 	if (argc == 6)
 		ptr->times_musteat = ft_atoi(argv[5]);
 	ptr->forks = malloc(sizeof(pthread_mutex_t) * ptr->nb_ofphilos);
-	gettimeofday(&ptr->time, NULL);
 }
 
 void	createlist(t_thread	*t, t_philo **p, int argc, char **argv)
@@ -112,12 +152,14 @@ int main(int argc, char *argv[])
 		pthread_mutex_init(&t.forks[i], NULL);
 		i++;
 	}
+	pthread_create(&p->data->death, NULL, &checkdeath, p);
 	i = 0;
 	temp = p;
 	while(i < t.nb_ofphilos)
 	{
 		pthread_mutex_init(&temp->print, NULL);
 		pthread_create(&temp->philo, NULL, &routine, temp);
+		// pthread_create(&temp->death, NULL, &checkdeath, temp);
 		usleep(1000);
 		i++;
 		temp = temp->next;

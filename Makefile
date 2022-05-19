@@ -6,11 +6,11 @@
 #    By: olakhdar <olakhdar@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/04/06 16:36:12 by olakhdar          #+#    #+#              #
-#    Updated: 2022/05/16 16:30:18 by olakhdar         ###   ########.fr        #
+#    Updated: 2022/05/19 16:28:53 by olakhdar         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-NAME = philosophers
+NAME = philo
 
 CC = gcc
 
