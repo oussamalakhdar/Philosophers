@@ -1,16 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   philo_lists.c                                      :+:      :+:    :+:   */
+/*   philo_data.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: olakhdar <olakhdar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/16 14:24:12 by olakhdar          #+#    #+#             */
-/*   Updated: 2022/05/26 15:58:39 by olakhdar         ###   ########.fr       */
+/*   Updated: 2022/06/01 19:22:15 by olakhdar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "philosophers.h"
+#include "philo_bonus.h"
 
 void	getdata(t_thread *ptr, char **argv, int argc)
 {
@@ -22,10 +22,9 @@ void	getdata(t_thread *ptr, char **argv, int argc)
 		ptr->times_musteat = ft_atoi(argv[5]);
 	else
 		ptr->times_musteat = -1;
-	ptr->forks = malloc(sizeof(pthread_mutex_t) * ptr->nb_ofphilos);
 }
 
-t_philo	*ft_lstnew(t_thread *t, int id, int i)
+t_philo	*ft_lstnew(t_thread *t, int id)
 {
 	t_philo	*p;
 
@@ -33,12 +32,9 @@ t_philo	*ft_lstnew(t_thread *t, int id, int i)
 	if (p == NULL)
 		return (NULL);
 	p->id = id;
-	p->right_fork = i;
-	p->left_fork = (i + 1) % (t->nb_ofphilos);
 	p->last_meal = 0;
 	p->meals_count = 0;
 	p->eating = 0;
-	p->philo = 0;
 	p->data = t;
 	p->next = NULL;
 	return (p);
@@ -76,7 +72,7 @@ int	createlist(t_thread	*t, t_philo **p, int argc, char **argv)
 		return (0);
 	while (i < t->nb_ofphilos)
 	{
-		new = ft_lstnew(t, id, i);
+		new = ft_lstnew(t, id);
 		ft_lstadd_back(p, new);
 		i++;
 		id++;
